@@ -1,7 +1,9 @@
-import React from 'react'
+import React, {useState, useEffect} from 'react'
 import styled from '@emotion/styled'
+import Axios from 'axios'
 import imagen from './cryptomonedas.png'
 import Formulario from './components/Formulario'
+import Cotizacion from './components/Cotizacion'
 
 const Contenedor = styled.div`
   max-width: 900px;
@@ -37,6 +39,28 @@ const Heading = styled.h1`
 `
 
 function App() {
+
+  const [moneda, guardarMoneda] = useState('')
+  const [criptomoneda, guardarCriptomoneda] = useState('')
+  const [resultado, guardarResultado] = useState({})
+
+  //Segunda llamada a la API para conocer la cotización, se ejecuta cuando los estados de moneda y criptomoneda se actualizan
+  useEffect(() => {
+    const cotizarCriptomoneda = async () => {
+      if(moneda === '') return
+
+      const url = `https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${criptomoneda}&tsyms=${moneda}`
+  
+      const resultado = await Axios.get(url)
+
+      //Debido a que los campos del objeto que devuelve la API cambian según las opciones que el usuario elija, es necesario definir los campos de criptomoneda y moneda de esta manera, para poder acceder a ellos (respuesta de API dinámica)
+      guardarResultado(resultado.data.DISPLAY[criptomoneda][moneda])
+    }
+
+    cotizarCriptomoneda()
+
+  }, [moneda, criptomoneda])
+
   return (
     <Contenedor>
       <div>
@@ -45,7 +69,9 @@ function App() {
       <div>
         <Heading>Cotiza criptomonedas al instante</Heading>
 
-        <Formulario />
+        <Formulario guardarMoneda={guardarMoneda} guardarCriptomoneda={guardarCriptomoneda} />
+
+        <Cotizacion resultado={resultado} />
       </div>
     </Contenedor>
   )
